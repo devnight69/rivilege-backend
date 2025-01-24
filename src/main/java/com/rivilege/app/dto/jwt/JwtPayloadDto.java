@@ -12,7 +12,7 @@ public class JwtPayloadDto {
   private String fullName;
   private String mobileNumber;
   private String userUlid;
-  private String userId;
+  private String memberId;
   private String userDesignation;
   private String tokenType;
   private Boolean active;

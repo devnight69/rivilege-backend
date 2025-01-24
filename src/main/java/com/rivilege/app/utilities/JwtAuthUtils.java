@@ -88,7 +88,7 @@ public class JwtAuthUtils {
     payload.put("mobileNumber", jwtPayloadDto.getMobileNumber());
     payload.put("fullName", jwtPayloadDto.getFullName());
     payload.put("userUlid", jwtPayloadDto.getUserUlid());
-    payload.put("userId", jwtPayloadDto.getUserId());
+    payload.put("memberId", jwtPayloadDto.getMemberId());
     payload.put("userDesignation", jwtPayloadDto.getUserDesignation());
     payload.put("active", jwtPayloadDto.getActive());
     payload.put("userType", jwtPayloadDto.getUserType());
@@ -101,7 +101,7 @@ public class JwtAuthUtils {
     try {
 
       return Jwts.builder()
-          .id(jwtPayloadDto.getUserId())
+          .id(jwtPayloadDto.getMemberId())
           .claim(AUTHORITIES_KEY, authorities)
           .subject(authentication.getName())
           .claims(payload)
@@ -128,7 +128,7 @@ public class JwtAuthUtils {
     payload.put("mobileNumber", jwtPayloadDto.getMobileNumber());
     payload.put("fullName", jwtPayloadDto.getFullName());
     payload.put("userUlid", jwtPayloadDto.getUserUlid());
-    payload.put("userId", jwtPayloadDto.getUserId());
+    payload.put("memberId", jwtPayloadDto.getMemberId());
     payload.put("userDesignation", jwtPayloadDto.getUserDesignation());
     payload.put("active", jwtPayloadDto.getActive());
     payload.put("userType", jwtPayloadDto.getUserType());
@@ -141,7 +141,7 @@ public class JwtAuthUtils {
     try {
 
       return Jwts.builder()
-          .id(jwtPayloadDto.getUserId())
+          .id(jwtPayloadDto.getMemberId())
           .claim(AUTHORITIES_KEY, authorities)
           .subject(authentication.getName())
           .claims(payload)
@@ -180,7 +180,7 @@ public class JwtAuthUtils {
     dto.setMobileNumber((String) claims.get("mobileNumber"));
     dto.setFullName((String) claims.get("fullName"));
     dto.setUserUlid((String) claims.get("userUlid"));
-    dto.setUserId((String) claims.get("userId"));
+    dto.setMemberId((String) claims.get("memberId"));
     dto.setUserDesignation((String) claims.get("userDesignation"));
     dto.setActive((Boolean) claims.get("active"));
     dto.setUserType((String) claims.get("userType"));
