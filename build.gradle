@@ -1,0 +1,99 @@
+import com.github.spotbugs.snom.SpotBugsTask
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0-M1'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'checkstyle'
+	id 'com.github.spotbugs' version '4.8.0'
+}
+
+group = 'com.rivilege'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(23)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-quartz'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.12.6'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.12.6'
+	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.12.6'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+def configDir = "${project.rootDir}/quality"
+
+checkstyle {
+	toolVersion '10.7.0'
+	configFile file("$configDir/checkstyle/checkstyle.xml")
+	//configProperties.checkstyleSuppressionsPath = file("$configDir/checkstyle/suppressions.xml").absolutePath
+}
+
+checkstyleMain {
+	source ='src/main/java'
+	ignoreFailures = false
+	maxWarnings = 0
+}
+
+checkstyleTest {
+	source ='src/test/java'
+}
+tasks.withType(Checkstyle).configureEach {
+	reports {
+		xml.required = false
+		html.required = true
+		//html.stylesheet resources.text.fromFile('config/xsl/checkstyle-custom.xsl')
+	}
+}
+
+//Spotbug
+spotbugs {
+	toolVersion = '4.8.0'
+	effort = "max"
+	reportLevel = "high"
+	ignoreFailures = true
+	//stylesheet resources.text.fromArchiveEntry(configurations.spotbugsStylesheets, 'fancy-hist.xsl')
+}
+
+tasks.withType(SpotBugsTask).configureEach {
+	reports {
+		xml {
+			enabled = true
+		}
+		html {
+			enabled = true
+		}
+	}
+}
