@@ -42,6 +42,7 @@ public class RegistrationUserRequestDtoToUsers implements Converter<Registration
     users.setAadhaarNumber(source.getAadhaarNumber());
     users.setPassword(passwordEncoder.encode(source.getPassword()));
     users.setMemberId(generateUniqueMemberId());
+    users.setUserType(source.getUserType());
     return users;
   }
 

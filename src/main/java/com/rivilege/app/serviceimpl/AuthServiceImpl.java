@@ -6,11 +6,21 @@ import com.rivilege.app.dto.request.LogInRequestDto;
 import com.rivilege.app.dto.request.RegistrationUserRequestDto;
 import com.rivilege.app.dto.response.LogInResponseDto;
 import com.rivilege.app.dto.response.ReferralUserDetailsResponseDto;
+import com.rivilege.app.enums.UserDesignationType;
+import com.rivilege.app.model.CommissionWallet;
+import com.rivilege.app.model.IdPackages;
+import com.rivilege.app.model.ReferralDetails;
 import com.rivilege.app.model.Users;
+import com.rivilege.app.repository.CommissionWalletRepository;
+import com.rivilege.app.repository.IdPackagesRepository;
+import com.rivilege.app.repository.ReferralDetailsRepository;
 import com.rivilege.app.repository.UsersRepository;
 import com.rivilege.app.response.BaseResponse;
 import com.rivilege.app.service.AuthService;
+import jakarta.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -20,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * this is a auth service implementation class .
@@ -35,6 +46,15 @@ public class AuthServiceImpl implements AuthService {
 
   @Autowired
   private UsersRepository usersRepository;
+
+  @Autowired
+  private IdPackagesRepository idPackagesRepository;
+
+  @Autowired
+  private CommissionWalletRepository commissionWalletRepository;
+
+  @Autowired
+  private ReferralDetailsRepository referralDetailsRepository;
 
   @Autowired
   private PasswordEncoder passwordEncoder;
@@ -55,36 +75,188 @@ public class AuthServiceImpl implements AuthService {
    * @return @{@link ResponseEntity}
    */
   @Override
+  @Transactional
   public ResponseEntity<?> registerNewMember(RegistrationUserRequestDto dto) {
+    logger.info("Starting registration process for Mobile: {}, Email: {}", dto.getMobileNumber(), dto.getEmailId());
+
     try {
-      logger.info("Attempting to register new member with mobileNumber: {} and emailId: {}",
-          dto.getMobileNumber(), dto.getEmailId());
-
-      // Check if the user already exists with the given mobile number or email id
-      boolean userExist = usersRepository.existsByMobileNumberOrEmailId(dto.getMobileNumber(), dto.getEmailId());
-
-      if (userExist) {
-        logger.warn("User with mobile number {} or email {} already exists.", dto.getMobileNumber(), dto.getEmailId());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST,
-            "User with provided mobile number or email already exists.");
+      // Check if referee exists
+      if (!usersRepository.existsByMemberId(dto.getRefereeMemberId())) {
+        String errorMessage = String.format("Referee with Member ID: %s does not exist. Mobile: %s",
+            dto.getRefereeMemberId(), dto.getMobileNumber());
+        logger.warn("Registration failed: {}", errorMessage);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
       }
 
-      // Convert DTO to Users entity and save it
-      Users users = registrationUserRequestDtoToUsers.convert(dto);
-      users = usersRepository.saveAndFlush(users);
+      // Check if user already exists by mobile or email
+      if (usersRepository.existsByMobileNumberOrEmailId(dto.getMobileNumber(), dto.getEmailId())) {
+        String errorMessage = String.format("User already exists with Mobile: %s or Email: %s",
+            dto.getMobileNumber(), dto.getEmailId());
+        logger.warn("Registration failed: {}", errorMessage);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+      }
 
-      // Prepare success response
+      // Check if user already exists by PAN
+      if (usersRepository.existsByPanNumber(dto.getPanNumber())) {
+        String errorMessage = String.format("User already exists with PAN: %s", dto.getPanNumber());
+        logger.warn("Registration failed: {}", errorMessage);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+      }
+
+      // Check if user already exists by Aadhaar
+      if (usersRepository.existsByAadhaarNumber(dto.getAadhaarNumber())) {
+        String errorMessage = String.format("User already exists with Aadhaar: %s", dto.getAadhaarNumber());
+        logger.warn("Registration failed: {}", errorMessage);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+      }
+
+      // Convert DTO to entity and save the user
+      Users user = registrationUserRequestDtoToUsers.convert(dto);
+      user = usersRepository.saveAndFlush(user);
+
+      // Update referral details
+      updateReferrerDetails(
+          dto.getRefereeMemberId(), dto.getRefereeMobileNumber(), dto.getReferredUserDesignation(),
+          user.getMemberId(), user.getMobileNumber(), user.getUserDesignation(),
+          dto.getRmMemberId(), dto.getSdMemberId(), dto.getDistributorMemberId()
+      );
+
+      // Success response
       Map<String, String> response = new HashMap<>();
-      response.put("memberId", users.getMemberId());
-
-      logger.info("User registered successfully with memberId: {}", users.getMemberId());
+      response.put("memberId", user.getMemberId());
+      logger.info("User registered successfully with Member ID: {}", user.getMemberId());
 
       return baseResponse.successResponse("Member registration successful.", response);
 
     } catch (Exception e) {
-      logger.error("Error occurred during user registration: {}", e.getMessage(), e);
+      String errorMessage = String.format("Unexpected error during registration. Mobile: %s, Email: %s",
+          dto.getMobileNumber(), dto.getEmailId());
+      logger.error("{} Error: {}", errorMessage, e.getMessage(), e);
+      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
-          "An error occurred while processing your registration. Please try again later.");
+          "An internal error occurred. Please try again later.");
+    }
+  }
+
+  private void updateReferrerDetails(
+      String memberId, String mobileNumber, UserDesignationType userDesignation,
+      String referredMemberId, String referredMobileNumber, UserDesignationType referredUserDesignationType,
+      String rmMemberId, String sdMemberId, String distributorMemberId
+  ) {
+    logger.info("Updating referral details for Member ID: {}, Designation: {}", memberId, userDesignation);
+
+    ReferralDetails referralDetails = new ReferralDetails();
+    referralDetails.setMemberId(memberId);
+    referralDetails.setMobileNumber(mobileNumber);
+    referralDetails.setReferredMemberId(referredMemberId);
+    referralDetails.setReferredMobileNumber(referredMobileNumber);
+    referralDetails.setReferredDesignation(referredUserDesignationType);
+    referralDetails.setDesignation(userDesignation);
+
+    try {
+      // Hierarchical relationship logic
+      switch (userDesignation) {
+        case GENERAL_MANAGER:
+          setGeneralManagerHierarchy(referralDetails, referredUserDesignationType, referredMemberId, rmMemberId,
+              sdMemberId, distributorMemberId);
+          break;
+        case REGIONAL_MANAGER:
+          setRegionalManagerHierarchy(referralDetails, referredUserDesignationType, referredMemberId, sdMemberId,
+              distributorMemberId);
+          break;
+        case SUPER_DISTRIBUTOR:
+          setSuperDistributorHierarchy(referralDetails, referredUserDesignationType, referredMemberId,
+              distributorMemberId);
+          break;
+        case DISTRIBUTOR:
+          if (referredUserDesignationType == UserDesignationType.RETAILER) {
+            referralDetails.setRetailerId(referredMemberId);
+          }
+          break;
+        default:
+          logger.warn("No hierarchical relationships to set for Designation: {}", userDesignation);
+          break;
+      }
+
+      referralDetailsRepository.saveAndFlush(referralDetails);
+      logger.info("Referral details updated successfully for Member ID: {}", memberId);
+
+    } catch (Exception e) {
+      logger.error("Error while updating referral details for Member ID: {}. Error: {}", memberId, e.getMessage(), e);
+      throw new RuntimeException("Failed to update referral details.");
+    }
+  }
+
+  private void setGeneralManagerHierarchy(ReferralDetails referralDetails, UserDesignationType referredDesignation,
+                                          String referredMemberId, String rmMemberId, String sdMemberId,
+                                          String distributorMemberId) {
+    switch (referredDesignation) {
+      case REGIONAL_MANAGER -> referralDetails.setRegionalManagerId(referredMemberId);
+      case SUPER_DISTRIBUTOR -> {
+        referralDetails.setRegionalManagerId(rmMemberId);
+        referralDetails.setSuperDistributorId(referredMemberId);
+      }
+      case DISTRIBUTOR -> {
+        referralDetails.setRegionalManagerId(getParentId(sdMemberId, UserDesignationType.SUPER_DISTRIBUTOR));
+        referralDetails.setSuperDistributorId(sdMemberId);
+        referralDetails.setDistributorId(referredMemberId);
+      }
+      case RETAILER -> {
+        referralDetails.setRetailerId(referredMemberId);
+        referralDetails.setDistributorId(distributorMemberId);
+        referralDetails.setSuperDistributorId(getParentId(distributorMemberId, UserDesignationType.DISTRIBUTOR));
+        referralDetails.setRegionalManagerId(getParentId(referralDetails.getSuperDistributorId(),
+            UserDesignationType.SUPER_DISTRIBUTOR));
+      }
+      default -> {
+        throw new RuntimeException("Invalid Designation");
+      }
+    }
+  }
+
+  private void setRegionalManagerHierarchy(ReferralDetails referralDetails, UserDesignationType referredDesignation,
+                                           String referredMemberId, String sdMemberId, String distributorMemberId) {
+    switch (referredDesignation) {
+      case SUPER_DISTRIBUTOR -> referralDetails.setSuperDistributorId(referredMemberId);
+      case DISTRIBUTOR -> {
+        referralDetails.setSuperDistributorId(sdMemberId);
+        referralDetails.setDistributorId(referredMemberId);
+      }
+      case RETAILER -> {
+        referralDetails.setRetailerId(referredMemberId);
+        referralDetails.setDistributorId(distributorMemberId);
+        referralDetails.setSuperDistributorId(getParentId(distributorMemberId, UserDesignationType.DISTRIBUTOR));
+      }
+      default -> {
+        throw new RuntimeException("Invalid Designation");
+      }
+    }
+  }
+
+  private void setSuperDistributorHierarchy(ReferralDetails referralDetails, UserDesignationType referredDesignation,
+                                            String referredMemberId, String distributorMemberId) {
+    if (referredDesignation == UserDesignationType.DISTRIBUTOR) {
+      referralDetails.setDistributorId(referredMemberId);
+    } else if (referredDesignation == UserDesignationType.RETAILER) {
+      referralDetails.setRetailerId(referredMemberId);
+      referralDetails.setDistributorId(distributorMemberId);
+    }
+  }
+
+  private String getParentId(String memberId, UserDesignationType designation) {
+    try {
+      return switch (designation) {
+        case SUPER_DISTRIBUTOR -> referralDetailsRepository.findRegionalManagerIdByMemberIdAndDesignation(memberId,
+            designation);
+        case DISTRIBUTOR -> referralDetailsRepository.findSuperDistributorIdByMemberIdAndDesignation(memberId,
+            designation);
+        case RETAILER -> referralDetailsRepository.findDistributorIdByMemberIdAndDesignation(memberId, designation);
+        default -> throw new IllegalArgumentException("Invalid designation provided: " + designation);
+      };
+    } catch (Exception e) {
+      logger.error("Failed to fetch parent ID for Member ID: {} and Designation: {}. Error: {}", memberId,
+          designation, e.getMessage(), e);
+      throw new RuntimeException("Failed to fetch parent ID.");
     }
   }
 
@@ -112,6 +284,7 @@ public class AuthServiceImpl implements AuthService {
       ReferralUserDetailsResponseDto dto = new ReferralUserDetailsResponseDto(
           users.getFullName(),
           users.getMemberId(),
+          users.getMobileNumber(),
           users.getUserDesignation()
       );
 
@@ -168,6 +341,77 @@ public class AuthServiceImpl implements AuthService {
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An error occurred while logging in. Please try again later.");
     }
+  }
+
+
+  private void updateCommissionWallet(String memberId, String mobileNumber, UserDesignationType userDesignationType,
+                                      String referredMemberId, String referredMobileNumber,
+                                      UserDesignationType referredUserDesignationType, String rmMemberId,
+                                      String sdMemberId, String distributorMemberId) {
+
+    List<CommissionWallet> commissionWalletList = new ArrayList<>();
+
+    CommissionWallet commissionWallet = new CommissionWallet();
+
+    if (referredUserDesignationType.equals(UserDesignationType.REGIONAL_MANAGER)) {
+      Optional<ReferralDetails> optionalReferralDetails = referralDetailsRepository.findByMemberId(referredMemberId);
+
+      if (optionalReferralDetails.isEmpty()) {
+        throw new RuntimeException("");
+      }
+
+      IdPackages idPackages = packageDetails(userDesignationType);
+
+      double commissionBalance = idPackages.getJoiningAmount() * ((double) 30 / 100);
+
+      commissionWallet.setMemberId(memberId);
+      commissionWallet.setMobileNumber(mobileNumber);
+      commissionWallet.setReferredMemberId(referredMemberId);
+      commissionWallet.setReferredMobileNumber(referredMobileNumber);
+      commissionWallet.setCommissionBalance(commissionBalance);
+
+      commissionWalletList.add(commissionWallet);
+
+    } else if (referredUserDesignationType.equals(UserDesignationType.SUPER_DISTRIBUTOR)) {
+      Optional<ReferralDetails> optionalReferralDetails = referralDetailsRepository.findByMemberId(referredMemberId);
+
+      if (optionalReferralDetails.isEmpty()) {
+        throw new RuntimeException("");
+      }
+
+      IdPackages idPackages = packageDetails(userDesignationType);
+
+      double commissionBalance = idPackages.getJoiningAmount() * ((double) 30 / 100);
+
+      commissionWallet.setMemberId(memberId);
+      commissionWallet.setMobileNumber(mobileNumber);
+      commissionWallet.setReferredMemberId(referredMemberId);
+      commissionWallet.setReferredMobileNumber(referredMobileNumber);
+      commissionWallet.setCommissionBalance(commissionBalance);
+
+      commissionWalletList.add(commissionWallet);
+
+      commissionWallet.setMemberId(memberId);
+      commissionWallet.setMobileNumber(mobileNumber);
+      commissionWallet.setReferredMemberId(optionalReferralDetails.get().getReferredMemberId());
+      commissionWallet.setReferredMobileNumber(optionalReferralDetails.get().getReferredMobileNumber());
+      commissionWallet.setCommissionBalance(commissionBalance);
+
+      commissionWalletList.add(commissionWallet);
+    }
+
+
+    commissionWalletRepository.saveAllAndFlush(commissionWalletList);
+
+  }
+
+
+  private IdPackages packageDetails(UserDesignationType userDesignationType) {
+    Optional<IdPackages> optionalIdPackages = idPackagesRepository.findByUserDesignation(userDesignationType);
+    if (optionalIdPackages.isEmpty()) {
+      throw new RuntimeException("");
+    }
+    return optionalIdPackages.get();
   }
 
 }

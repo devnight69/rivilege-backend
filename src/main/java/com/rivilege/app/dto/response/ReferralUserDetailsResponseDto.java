@@ -19,6 +19,8 @@ public class ReferralUserDetailsResponseDto {
 
   private String memberId;
 
+  private String mobileNumber;
+
   private UserDesignationType userDesignation;
 
 }

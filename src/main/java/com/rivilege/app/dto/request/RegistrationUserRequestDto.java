@@ -1,7 +1,9 @@
 package com.rivilege.app.dto.request;
 
 import com.rivilege.app.constant.RivilegeConstantService;
+import com.rivilege.app.customvalidator.ValidMemberId;
 import com.rivilege.app.enums.UserDesignationType;
+import com.rivilege.app.enums.UserType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +18,31 @@ import lombok.Data;
  */
 @Data
 public class RegistrationUserRequestDto {
+
+  @NotBlank(message = "refereeMemberId cannot be blank.")
+  @Pattern(
+      regexp = RivilegeConstantService.MEMBER_ID_REGEX,
+      message = "refereeMemberId must start with 'R' followed by exactly 9 alphanumeric characters (letters and digits)"
+          + " without any special characters."
+  )
+  @Size(min = 10, max = 10, message = "refereeMemberId must be exactly 10 characters long")
+  private String refereeMemberId;
+
+  @NotNull(message = "refereeMobileNumber cannot be null")
+  @Pattern(regexp = RivilegeConstantService.MOBILE_NUMBER_REGEX, message = "Incorrect refereeMobileNumber")
+  private String refereeMobileNumber;
+
+  @NotNull(message = "referredUserDesignation cannot be null")
+  private UserDesignationType referredUserDesignation;
+
+  @ValidMemberId
+  private String rmMemberId;
+
+  @ValidMemberId
+  private String sdMemberId;
+
+  @ValidMemberId
+  private String distributorMemberId;
 
   @NotBlank(message = "fullName cannot be blank")
   @NotNull(message = "fullName cannot be null")
@@ -53,5 +80,7 @@ public class RegistrationUserRequestDto {
           + " one lowercase letter, one number, and one special character."
   )
   private String password;
+
+  private UserType userType;
 
 }

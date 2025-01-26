@@ -34,4 +34,12 @@ public interface UsersRepository extends JpaRepository<Users, Long> {
       + "FROM Users u WHERE u.memberId = :memberId")
   boolean existsByMemberId(String memberId);
 
+  @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END "
+      + "FROM Users u WHERE u.panNumber = :panNumber")
+  boolean existsByPanNumber(String panNumber);
+
+  @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END "
+      + "FROM Users u WHERE u.aadhaarNumber = :aadhaarNumber")
+  boolean existsByAadhaarNumber(String aadhaarNumber);
+
 }

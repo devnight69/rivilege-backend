@@ -60,7 +60,7 @@ public class SecurityConfig {
             authorizationManagerRequestMatcherRegistry
                 .requestMatchers("/health-check/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .anyRequest().fullyAuthenticated());
+                .anyRequest().permitAll());
   }
 
 
