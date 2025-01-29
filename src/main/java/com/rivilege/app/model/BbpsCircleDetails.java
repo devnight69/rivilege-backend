@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -15,7 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * this is commission wallet database schema .
+ * this is a bbps circle details database table .
  *
  * @author kousik manik
  */
@@ -23,16 +22,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(
-    name = "commission_wallet",
-    schema = "rivilege",
-    indexes = {
-        @Index(name = "idx_cw_member_id", columnList = "member_id"),
-        @Index(name = "idx_cw_mobile_number", columnList = "mobile_number"),
-        @Index(name = "idx_cw_referred_member_id", columnList = "referred_member_id"),
-        @Index(name = "idx_cw_referred_mobile_number", columnList = "referred_mobile_number")
-    }
-)
-public class CommissionWallet {
+    name = "bbps_circle_details",
+    schema = "master")
+public class BbpsCircleDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -40,20 +32,14 @@ public class CommissionWallet {
   @JsonIgnore
   private Long id;
 
-  @Column(name = "member_id", nullable = false)
-  private String memberId;
+  @Column(name = "circle_code", nullable = false)
+  private String circleCode;
 
-  @Column(name = "mobile_number", nullable = false)
-  private String mobileNumber;
+  @Column(name = "circle_name", nullable = false)
+  private String circleName;
 
-  @Column(name = "referred_member_id", nullable = false)
-  private String referredMemberId;
-
-  @Column(name = "referred_mobile_number", nullable = false)
-  private String referredMobileNumber;
-
-  @Column(name = "commission_balance", nullable = false)
-  private double commissionBalance;
+  @Column(name = "bbps_type", nullable = false)
+  private String bbpsType;
 
   @Column(name = "created_at", nullable = false)
   private Date createdAt;
@@ -72,5 +58,4 @@ public class CommissionWallet {
   private void beforeUpdate() {
     this.setUpdatedAt(new Date());
   }
-
 }

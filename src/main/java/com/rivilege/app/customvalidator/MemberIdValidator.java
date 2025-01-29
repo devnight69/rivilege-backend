@@ -1,6 +1,7 @@
 package com.rivilege.app.customvalidator;
 
 import com.rivilege.app.constant.RivilegeConstantService;
+import com.rivilege.app.utilities.StringUtils;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;
@@ -26,7 +27,7 @@ public class MemberIdValidator implements ConstraintValidator<ValidMemberId, Str
   @Override
   public boolean isValid(String value, ConstraintValidatorContext context) {
     // Return true if value is null
-    if (value == null) {
+    if (!StringUtils.isNotNullAndNotEmpty(value)) {
       return true;
     }
 

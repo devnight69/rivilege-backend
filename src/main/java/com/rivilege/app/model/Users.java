@@ -76,7 +76,7 @@ public class Users {
   @Column(name = "aadhaar_number", nullable = false, unique = true)
   private String aadhaarNumber;
 
-  @Column(name = "password", nullable = false, unique = true)
+  @Column(name = "password", nullable = false)
   private String password;
 
   @Column(name = "main_wallet", nullable = false)

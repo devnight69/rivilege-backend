@@ -17,6 +17,7 @@ import com.rivilege.app.repository.ReferralDetailsRepository;
 import com.rivilege.app.repository.UsersRepository;
 import com.rivilege.app.response.BaseResponse;
 import com.rivilege.app.service.AuthService;
+import com.rivilege.app.utilities.StringUtils;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,6 +111,11 @@ public class AuthServiceImpl implements AuthService {
         return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
       }
 
+      // Process referral and handle errors
+      ResponseEntity<?> referralResponse = processReferral(dto.getReferredUserDesignation(), dto.getUserDesignation(), dto);
+      if (!referralResponse.getStatusCode().is2xxSuccessful()) {
+        return referralResponse; // Return the error response from processReferral
+      }
       // Convert DTO to entity and save the user
       Users user = registrationUserRequestDtoToUsers.convert(dto);
       user = usersRepository.saveAndFlush(user);
@@ -117,7 +123,7 @@ public class AuthServiceImpl implements AuthService {
       // Update referral details
       updateReferrerDetails(
           dto.getRefereeMemberId(), dto.getRefereeMobileNumber(), dto.getReferredUserDesignation(),
-          user.getMemberId(), user.getMobileNumber(), user.getUserDesignation(),
+          user.getMemberId(), user.getMobileNumber(), user.getUserDesignation(), user.getFullName(),
           dto.getRmMemberId(), dto.getSdMemberId(), dto.getDistributorMemberId()
       );
 
@@ -138,9 +144,100 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
+  private ResponseEntity<?> processReferral(UserDesignationType referredUserDesignationType,
+                                            UserDesignationType userDesignation,
+                                            RegistrationUserRequestDto dto) {
+
+    if (referredUserDesignationType == null || userDesignation == null) {
+      logger.error("Invalid designation types provided: referredUserDesignationType={}, userDesignation={}",
+          referredUserDesignationType, userDesignation);
+      return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Invalid Designation Type");
+    }
+
+    logger.info("Processing referral: referredUserDesignationType={}, userDesignation={}",
+        referredUserDesignationType, userDesignation);
+
+    switch (referredUserDesignationType) {
+      case GENERAL_MANAGER:
+        if (userDesignation.equals(UserDesignationType.SUPER_DISTRIBUTOR)) {
+          if (!StringUtils.isNotNullAndNotEmpty(dto.getRmMemberId())) {
+            logger.warn("Regional Manager ID missing for SUPER_DISTRIBUTOR referral");
+            return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Please Add A Regional Manager Id");
+          }
+        } else if (userDesignation.equals(UserDesignationType.DISTRIBUTOR)) {
+          if (!StringUtils.isNotNullAndNotEmpty(dto.getSdMemberId())) {
+            logger.warn("Super Distributor ID missing for DISTRIBUTOR referral");
+            return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Please Add A Super Distributor Id");
+          }
+        } else if (userDesignation.equals(UserDesignationType.RETAILER)) {
+          if (!StringUtils.isNotNullAndNotEmpty(dto.getDistributorMemberId())) {
+            logger.warn("Distributor ID missing for RETAILER referral");
+            return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Please Add A Distributor Id");
+          }
+        }
+        break;
+
+      case REGIONAL_MANAGER:
+        if (userDesignation.equals(UserDesignationType.GENERAL_MANAGER)) {
+          logger.error("Invalid referral: Regional Manager cannot register General Manager");
+          return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Regional Manager Cannot Register General Manager");
+        }
+        if (userDesignation.equals(UserDesignationType.DISTRIBUTOR)) {
+          if (!StringUtils.isNotNullAndNotEmpty(dto.getSdMemberId())) {
+            logger.warn("Super Distributor ID missing for DISTRIBUTOR referral");
+            return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Please Add A Super Distributor Id");
+          }
+        } else if (userDesignation.equals(UserDesignationType.RETAILER)) {
+          if (!StringUtils.isNotNullAndNotEmpty(dto.getDistributorMemberId())) {
+            logger.warn("Distributor ID missing for RETAILER referral");
+            return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Please Add A Distributor Id");
+          }
+        }
+        break;
+
+      case SUPER_DISTRIBUTOR:
+        if (userDesignation.equals(UserDesignationType.GENERAL_MANAGER)
+            || userDesignation.equals(UserDesignationType.REGIONAL_MANAGER)) {
+          logger.error("Invalid referral: Super Distributor cannot register General Manager or Regional Manager");
+          return baseResponse.errorResponse(HttpStatus.BAD_REQUEST,
+              "Super Distributor Cannot Register General Manager And Regional Manager");
+        }
+        if (userDesignation.equals(UserDesignationType.RETAILER)) {
+          if (!StringUtils.isNotNullAndNotEmpty(dto.getDistributorMemberId())) {
+            logger.warn("Distributor ID missing for RETAILER referral");
+            return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Please Add A Distributor Id");
+          }
+        }
+        break;
+
+      case DISTRIBUTOR:
+        if (userDesignation.equals(UserDesignationType.GENERAL_MANAGER)
+            || userDesignation.equals(UserDesignationType.REGIONAL_MANAGER)
+            || userDesignation.equals(UserDesignationType.SUPER_DISTRIBUTOR)) {
+          logger.error("Invalid referral: Distributor cannot register higher-level designations");
+          return baseResponse.errorResponse(HttpStatus.BAD_REQUEST,
+              "Distributor Cannot Register General Manager, Regional Manager, or Super Distributor");
+        }
+        break;
+
+      case RETAILER:
+        logger.error("Invalid referral: Retailer cannot register any other ID");
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Retailer Cannot Register Any Other Id");
+
+      default:
+        logger.error("Unhandled referredUserDesignationType: {}", referredUserDesignationType);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Invalid Operation");
+    }
+
+    logger.info("Referral operation completed successfully for referredUserDesignationType={}, userDesignation={}",
+        referredUserDesignationType, userDesignation);
+    return baseResponse.successResponse("Operation Successful");
+  }
+
   private void updateReferrerDetails(
       String memberId, String mobileNumber, UserDesignationType userDesignation,
       String referredMemberId, String referredMobileNumber, UserDesignationType referredUserDesignationType,
+      String referredUserFullName,
       String rmMemberId, String sdMemberId, String distributorMemberId
   ) {
     logger.info("Updating referral details for Member ID: {}, Designation: {}", memberId, userDesignation);
@@ -150,6 +247,7 @@ public class AuthServiceImpl implements AuthService {
     referralDetails.setMobileNumber(mobileNumber);
     referralDetails.setReferredMemberId(referredMemberId);
     referralDetails.setReferredMobileNumber(referredMobileNumber);
+    referralDetails.setReferredMemberName(referredUserFullName);
     referralDetails.setReferredDesignation(referredUserDesignationType);
     referralDetails.setDesignation(userDesignation);
 
@@ -307,8 +405,6 @@ public class AuthServiceImpl implements AuthService {
    */
   @Override
   public ResponseEntity<?> loginUser(LogInRequestDto dto) {
-    // Logger initialization
-    Logger logger = LoggerFactory.getLogger(getClass());
 
     try {
       logger.info("Login attempt for memberId: {}", dto.getMemberId());

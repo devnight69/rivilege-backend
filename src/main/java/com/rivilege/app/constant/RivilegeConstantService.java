@@ -21,4 +21,15 @@ public class RivilegeConstantService {
 
   public static final String MEMBER_ID_REGEX = "^R[a-zA-Z0-9]{9}$";
 
+
+  public static final String BBPS_RECHARGE_TYPE = "RECHARGE";
+
+  public static final String BBPS_RECHARGE_TYPE_POSTPAID = "Mobile Postpaid";
+
+  public static final String BBPS_RECHARGE_TYPE_PREPAID = "Prepaid-Mobile";
+
+  public static final String BBPS_RECHARGE_TYPE_DTH = "DTH";
+
+  public static final String BBPS_RECHARGE_TYPE_ELECTRICITY = "Electricity";
+
 }

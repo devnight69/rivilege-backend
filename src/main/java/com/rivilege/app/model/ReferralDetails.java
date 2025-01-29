@@ -25,16 +25,12 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(
-    name = "referral_details",
-    schema = "rivilege",
-    indexes = {
-        @Index(name = "idx_users_member_id", columnList = "member_id"),
-        @Index(name = "idx_users_mobile_number", columnList = "mobile_number"),
-        @Index(name = "idx_users_referred_member_id", columnList = "referred_member_id"),
-        @Index(name = "idx_users_referred_mobile_number", columnList = "referred_mobile_number")
-    }
-)
+@Table(name = "referral_details", schema = "rivilege", indexes = {
+    @Index(name = "idx_ref_member_id", columnList = "member_id"),
+    @Index(name = "idx_ref_mobile_number", columnList = "mobile_number"),
+    @Index(name = "idx_ref_referred_member_id", columnList = "referred_member_id"),
+    @Index(name = "idx_ref_referred_mobile_number", columnList = "referred_mobile_number")
+})
 public class ReferralDetails {
 
   @Id
@@ -55,6 +51,9 @@ public class ReferralDetails {
 
   @Column(name = "referred_mobile_number", nullable = false)
   private String referredMobileNumber;
+
+  @Column(name = "referred_member_name", nullable = false)
+  private String referredMemberName;
 
   @Column(name = "referred_designation", nullable = false)
   @Enumerated(EnumType.STRING)

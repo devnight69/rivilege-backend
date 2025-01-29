@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * this is commission wallet database schema .
+ * this is a operator details table .
  *
  * @author kousik manik
  */
@@ -23,16 +23,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(
-    name = "commission_wallet",
-    schema = "rivilege",
+    name = "operator_details",
+    schema = "master",
     indexes = {
-        @Index(name = "idx_cw_member_id", columnList = "member_id"),
-        @Index(name = "idx_cw_mobile_number", columnList = "mobile_number"),
-        @Index(name = "idx_cw_referred_member_id", columnList = "referred_member_id"),
-        @Index(name = "idx_cw_referred_mobile_number", columnList = "referred_mobile_number")
-    }
-)
-public class CommissionWallet {
+        @Index(name = "idx_operator_service_type_name", columnList = "service_type_name"),
+    })
+public class OperatorDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -40,20 +36,14 @@ public class CommissionWallet {
   @JsonIgnore
   private Long id;
 
-  @Column(name = "member_id", nullable = false)
-  private String memberId;
+  @Column(name = "service_type_name", nullable = false)
+  private String serviceTypeName;
 
-  @Column(name = "mobile_number", nullable = false)
-  private String mobileNumber;
+  @Column(name = "operator_code", nullable = false)
+  private String operatorCode;
 
-  @Column(name = "referred_member_id", nullable = false)
-  private String referredMemberId;
-
-  @Column(name = "referred_mobile_number", nullable = false)
-  private String referredMobileNumber;
-
-  @Column(name = "commission_balance", nullable = false)
-  private double commissionBalance;
+  @Column(name = "operator_name", nullable = false)
+  private String operatorName;
 
   @Column(name = "created_at", nullable = false)
   private Date createdAt;
