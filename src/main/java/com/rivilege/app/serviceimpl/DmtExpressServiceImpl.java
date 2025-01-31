@@ -55,8 +55,8 @@ public class DmtExpressServiceImpl implements DmtExpressService {
    * Fetches the list of banks from the Cyrus Recharge API.
    *
    * @return ResponseEntity containing a list of banks if data exists,
-   * or an empty list if no data is found. Returns an error response
-   * with HTTP status 500 in case of any issues during the process.
+   *         or an empty list if no data is found. Returns an error response
+   *         with HTTP status 500 in case of any issues during the process.
    */
   @Override
   public ResponseEntity<?> getBankList() {
@@ -64,7 +64,7 @@ public class DmtExpressServiceImpl implements DmtExpressService {
 
     try {
       // Prepare the URL
-      String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
+      final String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
 
       // Create headers
       HttpHeaders headers = new HttpHeaders();
@@ -95,7 +95,8 @@ public class DmtExpressServiceImpl implements DmtExpressService {
 
     } catch (Exception e) {
       logger.error("Error occurred while fetching the bank list: {}", e.getMessage(), e);
-      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while processing your request.");
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An error occurred while processing your request.");
     }
   }
 
@@ -104,7 +105,7 @@ public class DmtExpressServiceImpl implements DmtExpressService {
    *
    * @param mobileNumber The mobile number of the customer for which details are to be fetched.
    * @return ResponseEntity containing the customer details if found, or an error message if not.
-   * Returns an error response with HTTP status 500 in case of any issues during the process.
+   *         Returns an error response with HTTP status 500 in case of any issues during the process .
    */
   @Override
   public ResponseEntity<?> getCustomerDetails(String mobileNumber) {
@@ -112,7 +113,7 @@ public class DmtExpressServiceImpl implements DmtExpressService {
 
     try {
       // Prepare the URL for the API request
-      String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
+      final String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
 
       // Set up HTTP headers
       HttpHeaders headers = new HttpHeaders();
@@ -162,7 +163,7 @@ public class DmtExpressServiceImpl implements DmtExpressService {
       logger.info("Initiating customer registration for mobile: {}", dto.getMobileNumber());
 
       // Define the URL for the DMT Express API
-      String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
+      final String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
 
       // Set up HTTP headers
       HttpHeaders headers = new HttpHeaders();
@@ -226,7 +227,7 @@ public class DmtExpressServiceImpl implements DmtExpressService {
       logger.info("Initiating KYC addition for mobile: {}", dto.getMobileNumber());
 
       // Define the URL for the DMT Express API
-      String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
+      final String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
 
       // Set up HTTP headers
       HttpHeaders headers = new HttpHeaders();
@@ -284,7 +285,7 @@ public class DmtExpressServiceImpl implements DmtExpressService {
       logger.info("Initiating KYC verification for mobile: {}", dto.getMobileNumber());
 
       // Define the URL for the DMT Express API
-      String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
+      final String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
 
       // Set up HTTP headers
       HttpHeaders headers = new HttpHeaders();
@@ -332,36 +333,36 @@ public class DmtExpressServiceImpl implements DmtExpressService {
   }
 
   /**
-   * Verifies KYC details for a beneficiary based on the provided mobile number, PAN, and Aadhaar.
-   * This method initiates a KYC verification request to the DMT Express API and processes the response.
-   * It returns the verification result or an error message in case of failure.
+   * Retrieves beneficiary details for KYC verification using the DMT Express API.
+   * This method sends a request with the mobile number, PAN, and Aadhaar details
+   * and returns the verification result.
    *
-   * @param dto The request DTO containing the mobile number, PAN, and Aadhaar number for verification.
-   * @return A ResponseEntity containing the verification result or an error response.
+   * @param dto The request object containing the mobile number, PAN, and Aadhaar.
+   * @return A ResponseEntity with the verification result or an error response.
    */
   @Override
   public ResponseEntity<?> getBeneficiaryDetails(DmtExpressAddKycRequestDto dto) {
     try {
-      // Log the incoming KYC verification request
-      logger.info("Initiating KYC verification for mobile: {}", dto.getMobileNumber());
+      // Log the start of the beneficiary details request
+      logger.info("Fetching beneficiary details for mobile: {}", dto.getMobileNumber());
 
-      // Define the URL for the DMT Express API
-      String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
+      // Define the API endpoint URL
+      final String url = cyrusRechargeApiEndpoint + CyrusApiConstantService.GET_DMT_EXPRESS;
 
       // Set up HTTP headers
       HttpHeaders headers = new HttpHeaders();
       headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-      // Create the request body with necessary parameters
+      // Prepare the request body with required parameters
       MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
       body.add("MerchantID", cyrusApiMemberId);
       body.add("MerchantKey", cyrusDmtExpressApiKey);
-      body.add("MethodName", "verify_kycdetails");
+      body.add("MethodName", "getbeneficiarydetails");
       body.add("MOBILENO", dto.getMobileNumber());
       body.add("Pan", dto.getPanNumber());
       body.add("Aadhar", dto.getAadhaarNumber());
 
-      // Combine headers and body into the HttpEntity
+      // Create HttpEntity with headers and body
       HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
 
       // Make the API call using RestTemplate
@@ -372,23 +373,23 @@ public class DmtExpressServiceImpl implements DmtExpressService {
           String.class
       ).getBody();
 
-      // Log the successful response
-      logger.info("KYC verification successful for mobile: {}", dto.getMobileNumber());
+      // Log the API response
+      logger.info("Successfully retrieved beneficiary details for mobile: {}", dto.getMobileNumber());
 
-      // Parse the response into the response DTO
+      // Parse the response
       DmtExpressBankListResponseDto resp = objectMapper.readValue(response, DmtExpressBankListResponseDto.class);
 
-      // Return a successful response with the data
+      // Return a response based on the API result
       if (resp.getData().isEmpty()) {
         return baseResponse.successResponse(resp.getStatus());
       }
       return baseResponse.successResponse(resp.getData());
 
     } catch (Exception e) {
-      // Log any other exceptions
-      logger.error("Unexpected error occurred while verifying KYC details for mobile: {}", dto.getMobileNumber(), e);
+      // Log any unexpected errors
+      logger.error("Error fetching beneficiary details for mobile: {}", dto.getMobileNumber(), e);
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
-          "An error occurred while verifying KYC details.");
+          "An error occurred while fetching beneficiary details.");
     }
   }
 

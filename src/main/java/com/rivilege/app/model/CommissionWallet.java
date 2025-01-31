@@ -27,7 +27,6 @@ import lombok.Setter;
     schema = "rivilege",
     indexes = {
         @Index(name = "idx_cw_member_id", columnList = "member_id"),
-        @Index(name = "idx_cw_mobile_number", columnList = "mobile_number"),
         @Index(name = "idx_cw_referred_member_id", columnList = "referred_member_id"),
         @Index(name = "idx_cw_referred_mobile_number", columnList = "referred_mobile_number")
     }
@@ -43,7 +42,7 @@ public class CommissionWallet {
   @Column(name = "member_id", nullable = false)
   private String memberId;
 
-  @Column(name = "mobile_number", nullable = false)
+  @Column(name = "mobile_number")
   private String mobileNumber;
 
   @Column(name = "referred_member_id", nullable = false)

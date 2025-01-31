@@ -20,6 +20,8 @@ public interface ReferralDetailsRepository extends JpaRepository<ReferralDetails
 
   Optional<ReferralDetails> findByMobileNumber(String mobileNumber);
 
+  Optional<ReferralDetails> findByReferredMemberId(String referredMemberId);
+
   @Query("SELECT r.regionalManagerId FROM ReferralDetails r WHERE r.referredMemberId = :memberId AND"
       + " r.referredDesignation = :referredDesignation")
   String findRegionalManagerIdByMemberIdAndDesignation(@Param("memberId") String memberId,

@@ -47,18 +47,21 @@ public class JwtTokenServiceImpl implements JwtTokenService {
       boolean tokenValid = jwtAuthUtils.validateToken(dto.getToken());
       if (!tokenValid) {
         logger.warn("Invalid refresh token provided for memberId: {}", dto.getMemberId());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Invalid refresh token. Please provide a valid token.");
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST,
+            "Invalid refresh token. Please provide a valid token.");
       }
 
       JwtPayloadDto jwtPayloadDto = jwtAuthUtils.decodeToken(dto.getToken());
       if (!"RT".equals(jwtPayloadDto.getTokenType())) {
         logger.warn("Provided token is not a refresh token for memberId: {}", dto.getMemberId());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Invalid token type. Please provide a valid refresh token.");
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST,
+            "Invalid token type. Please provide a valid refresh token.");
       }
 
       if (!jwtPayloadDto.getMemberId().equals(dto.getMemberId())) {
         logger.warn("Mismatch between token memberId and provided memberId: {}", dto.getMemberId());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Token mismatch. Please provide a valid refresh token.");
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST,
+            "Token mismatch. Please provide a valid refresh token.");
       }
 
       Map<String, String> response = new HashMap<>();
@@ -69,7 +72,8 @@ public class JwtTokenServiceImpl implements JwtTokenService {
       return baseResponse.successResponse(response);
     } catch (Exception e) {
       logger.error("Error while generating token from refresh token for memberId: {}", dto.getMemberId(), e);
-      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred. Please try again later.");
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An unexpected error occurred. Please try again later.");
     }
   }
 
@@ -86,6 +90,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         jwtPayloadDto.getMobileNumber(),
         null
     );
+    jwtPayloadDto.setTokenType("AT");
     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
     return jwtAuthUtils.generateToken(authenticationToken, jwtPayloadDto);
   }

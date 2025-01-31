@@ -61,5 +61,10 @@ public class DmtExpressController {
     return dmtExpressService.verifyKycDetails(dto);
   }
 
+  @PostMapping("/getBeneficiaryDetails")
+  public ResponseEntity<?> getBeneficiaryDetails(@Valid @RequestBody DmtExpressAddKycRequestDto dto) {
+    return dmtExpressService.getBeneficiaryDetails(dto);
+  }
+
 
 }
