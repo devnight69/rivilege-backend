@@ -1,7 +1,10 @@
 package com.rivilege.app.service;
 
+import com.rivilege.app.dto.cyrus.request.DmtExpressAddBeneficiaryRequestDto;
 import com.rivilege.app.dto.cyrus.request.DmtExpressAddKycRequestDto;
+import com.rivilege.app.dto.cyrus.request.DmtExpressBeneficiaryAccountVerificationRequestDto;
 import com.rivilege.app.dto.cyrus.request.DmtExpressRegistrationRequestDto;
+import com.rivilege.app.dto.cyrus.request.DmtExpressSendMoneyRequestDto;
 import com.rivilege.app.dto.cyrus.request.DmtExpressVerifyKycRequestDto;
 import org.springframework.http.ResponseEntity;
 
@@ -23,6 +26,16 @@ public interface DmtExpressService {
   public ResponseEntity<?> verifyKycDetails(DmtExpressVerifyKycRequestDto dto);
 
   public ResponseEntity<?> getBeneficiaryDetails(DmtExpressAddKycRequestDto dto);
+
+  public ResponseEntity<?> beneficiaryAccountVerification(DmtExpressBeneficiaryAccountVerificationRequestDto dto);
+
+  public ResponseEntity<?> addBeneficiary(DmtExpressAddBeneficiaryRequestDto dto);
+
+  public ResponseEntity<?> removeBeneficiaryAccount(String beneficiaryId);
+
+  public ResponseEntity<?> sendMoney(DmtExpressSendMoneyRequestDto dto);
+
+  public ResponseEntity<?> statusCheck(String orderId);
 
 
 }

@@ -1,12 +1,16 @@
 package com.rivilege.app.controller;
 
 import com.rivilege.app.constant.RivilegeConstantService;
+import com.rivilege.app.dto.cyrus.request.DmtExpressAddBeneficiaryRequestDto;
 import com.rivilege.app.dto.cyrus.request.DmtExpressAddKycRequestDto;
+import com.rivilege.app.dto.cyrus.request.DmtExpressBeneficiaryAccountVerificationRequestDto;
 import com.rivilege.app.dto.cyrus.request.DmtExpressRegistrationRequestDto;
+import com.rivilege.app.dto.cyrus.request.DmtExpressSendMoneyRequestDto;
 import com.rivilege.app.dto.cyrus.request.DmtExpressVerifyKycRequestDto;
 import com.rivilege.app.service.DmtExpressService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +68,39 @@ public class DmtExpressController {
   @PostMapping("/getBeneficiaryDetails")
   public ResponseEntity<?> getBeneficiaryDetails(@Valid @RequestBody DmtExpressAddKycRequestDto dto) {
     return dmtExpressService.getBeneficiaryDetails(dto);
+  }
+
+  @PostMapping("/beneficiary-account-verification")
+  public ResponseEntity<?> beneficiaryAccountVerification(@Valid @RequestBody
+                                                          DmtExpressBeneficiaryAccountVerificationRequestDto dto) {
+    return dmtExpressService.beneficiaryAccountVerification(dto);
+  }
+
+  @PostMapping("/add/beneficiary")
+  public ResponseEntity<?> addBeneficiary(@Valid @RequestBody DmtExpressAddBeneficiaryRequestDto dto) {
+    return dmtExpressService.addBeneficiary(dto);
+  }
+
+  @PostMapping("/remove-beneficiary-account")
+  public ResponseEntity<?> removeBeneficiaryAccount(@Valid @RequestParam("beneficiaryId")
+                                                    @NotBlank(message = "beneficiaryId cannot be blank")
+                                                    @NotNull(message = "beneficiaryId cannot be null")
+                                                    @NotEmpty(message = "beneficiaryId cannot be empty")
+                                                    String beneficiaryId) {
+    return dmtExpressService.removeBeneficiaryAccount(beneficiaryId);
+  }
+
+  @PostMapping("/send/money")
+  public ResponseEntity<?> sendMoney(@Valid @RequestBody DmtExpressSendMoneyRequestDto dto) {
+    return dmtExpressService.sendMoney(dto);
+  }
+
+  @GetMapping("/status-check")
+  public ResponseEntity<?> statusCheck(@Valid @RequestParam("orderId")
+                                       @NotNull(message = "orderId cannot be null")
+                                       @NotBlank(message = "orderId cannot be blank")
+                                       @NotEmpty(message = "orderId cannot be empty") String orderId) {
+    return dmtExpressService.statusCheck(orderId);
   }
 
 
