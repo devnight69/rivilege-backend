@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/dmt-express").fullyAuthenticated()
                 .requestMatchers("/api/v1/id/package").fullyAuthenticated()
                 .requestMatchers("/api/v1/operator").fullyAuthenticated()
+                .requestMatchers("/api/v1/user/**").fullyAuthenticated()
                 .anyRequest().fullyAuthenticated());
   }
 

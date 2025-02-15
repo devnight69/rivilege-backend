@@ -23,5 +23,8 @@ public class CyrusApiConstantService {
   public static final String MOBILE_PLAN_FETCH_API = "/API/CyrusPlanFatchAPI.aspx?APIID"
       + "={apiId}&PASSWORD={password}&Operator_Code={opCode}&Circle_Code={cCode}&MobileNumber={mobile}&data=ALL";
 
+  public static final String MOBILE_RECHARGE_REQUEST = "/services_cyapi/recharge_cyapi.aspx?memberid={memberId}"
+      + "&pin={pin}&number={number}&operator={operator}&circle={circle}&amount={amount}&usertx={usertx}"
+      + "&format=json&RechargeMode={mode}";
 
 }

@@ -1,6 +1,7 @@
 package com.rivilege.app.controller;
 
 import com.rivilege.app.dto.cyrus.request.MobileRechargePlanFetchRequestDto;
+import com.rivilege.app.dto.cyrus.request.MobileRechargeRequestDto;
 import com.rivilege.app.service.MobileRechargeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,11 @@ public class MobileRechargeController {
   @PostMapping("/getPlan")
   public ResponseEntity<?> getPlan(@Valid @RequestBody MobileRechargePlanFetchRequestDto dto) {
     return mobileRechargeService.getPlan(dto);
+  }
+
+  @PostMapping("/request")
+  public ResponseEntity<?> rechargeRequest(@Valid @RequestBody MobileRechargeRequestDto dto) {
+    return mobileRechargeService.rechargeRequest(dto);
   }
 
 

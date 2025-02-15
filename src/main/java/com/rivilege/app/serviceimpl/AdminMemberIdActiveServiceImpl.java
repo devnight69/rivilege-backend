@@ -261,6 +261,7 @@ public class AdminMemberIdActiveServiceImpl implements AdminMemberIdActiveServic
         .map(user -> {
           logger.info("Updating commission wallet for member ID: {}", memberId);
           user.setCommissionWallet(user.getCommissionWallet() + commissionBalance);
+          user.setMainWallet(user.getMainWallet() + commissionBalance);
           return usersRepository.save(user);
         })
         .orElseThrow(() -> {

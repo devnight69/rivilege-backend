@@ -2,6 +2,7 @@ package com.rivilege.app.repository;
 
 import com.rivilege.app.enums.UserDesignationType;
 import com.rivilege.app.model.ReferralDetails;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,9 +17,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReferralDetailsRepository extends JpaRepository<ReferralDetails, Long> {
 
-  Optional<ReferralDetails> findByMemberId(String memberId);
+  List<ReferralDetails> findByMemberId(String memberId);
 
-  Optional<ReferralDetails> findByMobileNumber(String mobileNumber);
+  List<ReferralDetails> findByMobileNumber(String mobileNumber);
 
   Optional<ReferralDetails> findByReferredMemberId(String referredMemberId);
 
