@@ -59,17 +59,25 @@ public class JwtTokenFilter extends OncePerRequestFilter {
       }
       JwtPayloadDto jwtPayloadDto = jwtAuthUtils.decodeToken(token);
 
-      request.setAttribute("payload", jwtPayloadDto);
-      if (SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserDetails userDetails = new User(jwtPayloadDto.getMobileNumber(), "",
-            Collections.singleton(new SimpleGrantedAuthority(jwtPayloadDto.getUserType())));
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        usernamePasswordAuthenticationToken
-            .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+      if (jwtPayloadDto.getTokenType().equals("AT")) {
+        request.setAttribute("payload", jwtPayloadDto);
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+          UserDetails userDetails = new User(jwtPayloadDto.getMobileNumber(), "",
+              Collections.singleton(new SimpleGrantedAuthority(jwtPayloadDto.getUserType())));
+          UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+              new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+          usernamePasswordAuthenticationToken
+              .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+          SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        }
+        chain.doFilter(request, response);
+      } else if (jwtPayloadDto.getTokenType().equals("RT")) {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        chain.doFilter(request, response);
+      } else {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        chain.doFilter(request, response);
       }
-      chain.doFilter(request, response);
     } catch (ExpiredJwtException eje) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       chain.doFilter(request, response);

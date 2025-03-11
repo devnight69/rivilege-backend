@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -58,6 +60,12 @@ public class SecurityConfig {
             authorizationManagerRequestMatcherRegistry
                 .requestMatchers("/health-check/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/refresh-token/**").permitAll()
+                .requestMatchers("/api/v1/circle/**").fullyAuthenticated()
+                .requestMatchers("/api/v1/dmt-express").fullyAuthenticated()
+                .requestMatchers("/api/v1/id/package").fullyAuthenticated()
+                .requestMatchers("/api/v1/operator").fullyAuthenticated()
+                .requestMatchers("/api/v1/user/**").fullyAuthenticated()
                 .anyRequest().fullyAuthenticated());
   }
 
@@ -109,6 +117,16 @@ public class SecurityConfig {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
+  }
+
+  /**
+   * this is a password encoder bean method .
+   *
+   * @return @{@link PasswordEncoder}
+   */
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 
 }
